@@ -6,7 +6,8 @@ import ntpath
 import time
 from . import util
 from . import html
-import scipy.misc
+# import scipy.misc   # deprecated
+from PIL import Image # CHANGE 
 try:
     from StringIO import StringIO  # Python 2.7
 except ImportError:
@@ -23,7 +24,10 @@ class Visualizer():
             import tensorflow as tf
             self.tf = tf
             self.log_dir = os.path.join(opt.checkpoints_dir, opt.name, 'logs')
-            self.writer = tf.summary.FileWriter(self.log_dir)
+            # self.writer = tf.summary.FileWriter(self.log_dir)  # deprecated
+            tf.compat.v1.disable_eager_execution()
+            self.writer = tf.compat.v1.summary.FileWriter(self.log_dir)  # CHANGE
+            # self.writer = tf.contrib.summary(self.log_dir)  # CHANGE AGAIN
 
         if self.use_html:
             self.web_dir = os.path.join(opt.checkpoints_dir, opt.name, 'web')
@@ -46,9 +50,11 @@ class Visualizer():
                 except:
                     s = BytesIO()
                 print(image_numpy)
-                scipy.misc.toimage(image_numpy).save(s, format="jpeg")
+                # scipy.misc.toimage(image_numpy).save(s, format="jpeg")  # scipy.misc.toimage deprecated
+                Image.fromarray(image_numpy).save(s, format="jpeg")  # CHANGE
                 # Create an Image object
-                img_sum = self.tf.Summary.Image(encoded_image_string=s.getvalue(), height=image_numpy.shape[0], width=image_numpy.shape[1])
+                # img_sum = self.tf.Summary.Image(encoded_image_string=s.getvalue(), height=image_numpy.shape[0], width=image_numpy.shape[1]) # CHANGE
+                img_sum = self.tf.compat.v1.summary.image(encoded_image_string=s.getvalue(), height=image_numpy.shape[0], width=image_numpy.shape[1])
                 # Create a Summary value
                 img_summaries.append(self.tf.Summary.Value(tag=label, image=img_sum))
 
@@ -98,7 +104,8 @@ class Visualizer():
     def plot_current_errors(self, errors, step):
         if self.tf_log:
             for tag, value in errors.items():
-                summary = self.tf.Summary(value=[self.tf.Summary.Value(tag=tag, simple_value=value)])
+                # summary = self.tf.Summary(value=[self.tf.Summary.Value(tag=tag, simple_value=value)]) # deprecated
+                summary = self.tf.compat.v1.Summary(value=[self.tf.compat.v1.Summary.Value(tag=tag, simple_value=value)])
                 self.writer.add_summary(summary, step)
 
     # errors: same format as |errors| of plotCurrentErrors
